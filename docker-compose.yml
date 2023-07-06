@@ -1,26 +1,25 @@
 version: "3.7"
 services:
-  sdvc-dashboard:
+  app:
     build:
       args:
-        user: sdvc
+        user: root
         uid: 3000
-        private_key : ./id_rsa
       context: ./
       dockerfile: Dockerfile
-    image: satu-data-vaksin
-    container_name: satu-data-vaksin-app
+    image: example-project
+    container_name: example-project-app
     restart: unless-stopped
     working_dir: /var/www/html/
     volumes:
       - ./html/:/var/www/html
       - ./files/:/var/www/files
     networks:
-      - sdvcnet
+      - default
 
   nginx:
     image: nginx:1.17-alpine
-    container_name: satu-data-vaksin-nginx
+    container_name: example-project-nginx
     restart: unless-stopped
     ports:
       - 80:80
@@ -28,7 +27,7 @@ services:
       - ./html/:/var/www/html
       - ./docker-compose/nginx:/etc/nginx/conf.d
     networks:
-      - sdvcnet
+      - default
   
   redis:
     image: telkomindonesia/alpine:redis-5.0
@@ -40,7 +39,7 @@ services:
     volumes:
        - ./redis:/var/lib/redis/data
     networks:
-      - sdvcnet
+      - default
   
   minio:
     image: telkomindonesia/debian:minio-1.0
@@ -54,8 +53,8 @@ services:
       - MINIO_SECRET_KEY=Test1234567
       - MINIO_BROWSER=on
     networks:
-      - sdvcnet
+      - default
 
 networks:
-  sdvcnet:
+  default:
     driver: bridge
