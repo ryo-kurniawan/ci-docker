@@ -71,7 +71,7 @@ services:
     volumes:
         - 'sailmysql:/var/lib/mysql'
     networks:
-        - sail
+        - default
     healthcheck:
         test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
         retries: 3
@@ -80,3 +80,6 @@ services:
 networks:
   default:
     driver: bridge
+volumes:
+    sailmysql:
+        driver: local
