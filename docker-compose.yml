@@ -22,10 +22,12 @@ services:
     container_name: example-project-nginx
     restart: unless-stopped
     ports:
-      - 80:80
+      - 8089:80
     volumes:
       - ./html/:/var/www/html
       - ./docker-compose/nginx:/etc/nginx/conf.d
+      - ./docker-compose/xdebug:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+      - ./docker-compose/error_reporting/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
     networks:
       - default
   
