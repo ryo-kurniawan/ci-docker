@@ -1,14 +1,14 @@
 version: "3.7"
 services:
-  app:
+  keuangan:
     build:
       args:
-        user: root
+        user: sail
         uid: 3000
       context: ./
       dockerfile: Dockerfile
-    image: example-project
-    container_name: example-project-app
+    image: keuangan-web
+    container_name: keuangan-app
     restart: unless-stopped
     working_dir: /var/www/html/
     volumes:
@@ -19,7 +19,7 @@ services:
 
   nginx:
     image: nginx:1.17-alpine
-    container_name: example-project-nginx
+    container_name: keuangan-nginx
     restart: unless-stopped
     ports:
       - 8089:80
@@ -30,52 +30,66 @@ services:
       - ./docker-compose/error_reporting/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
     networks:
       - default
-  
-  redis:
-    image: telkomindonesia/alpine:redis-5.0
-    env_file:
-      - ./redis.env
+
+  # keuangan-mysql:
+  #   image: 'mysql/mysql-server:8.0'
+  #   container_name: keuangan-mysql
+  #   ports:
+  #       - '${FORWARD_DB_PORT:-3306}:3306'
+  #   environment:
+  #       MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+  #       MYSQL_ROOT_HOST: '%'
+  #       MYSQL_DATABASE: '${DB_DATABASE}'
+  #       MYSQL_USER: '${DB_USERNAME}'
+  #       MYSQL_PASSWORD: '${DB_PASSWORD}'
+  #       MYSQL_ALLOW_EMPTY_PASSWORD: 1
+  #   command:
+  #           --sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+  #   volumes:
+  #       - 'sailmysql:/var/lib/mysql'
+  #   networks:
+  #       - default
+  #   healthcheck:
+  #       test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
+  #       retries: 3
+  #       timeout: 5s
+
+  keuangan-mysql:
+    image: mysql:latest
+    container_name: keuangan-mysql
     restart: always
     ports:
-      - 6379:6379
+      - '${FORWARD_DB_PORT:-3306}:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    command:
+            --sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
     volumes:
-       - ./redis:/var/lib/redis/data
+      - sailmysql:/var/lib/mysql
     networks:
       - default
-  
-  minio:
-    image: telkomindonesia/debian:minio-1.0
-    ports:
-      - 9000:9000
-    volumes:
-      - ./minio:/data/minio
-    container_name: minio
-    environment:
-      - MINIO_ACCESS_KEY=Test1234567
-      - MINIO_SECRET_KEY=Test1234567
-      - MINIO_BROWSER=on
-    networks:
-      - default
-
-  mysql:
-    image: 'mysql/mysql-server:8.0'
-    ports:
-        - '${FORWARD_DB_PORT:-3306}:3306'
-    environment:
-        MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-        MYSQL_ROOT_HOST: "%"
-        MYSQL_DATABASE: '${DB_DATABASE}'
-        MYSQL_USER: '${DB_USERNAME}'
-        MYSQL_PASSWORD: '${DB_PASSWORD}'
-        MYSQL_ALLOW_EMPTY_PASSWORD: 1
-    volumes:
-        - 'sailmysql:/var/lib/mysql'
-    networks:
-        - default
     healthcheck:
         test: ["CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}"]
         retries: 3
         timeout: 5s
+        
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: keuangan-phpmyadmin
+    ports:
+      - 8085:80
+    environment:
+      PMA_HOST: keuangan-mysql
+      PMA_USER: '${DB_USERNAME}'
+      PMA_PASSWORD: '${DB_PASSWORD}'
+    depends_on:
+      - keuangan-mysql
+    networks:
+      - default
 
 networks:
   default:
